@@ -1,0 +1,12 @@
+{
+  "name": "patronage-elearning",
+  "version": "1.0.0",
+  "private": true,
+  "description": "แบบทดสอบก่อนเรียน -> วีดีโอ -> แบบทดสอบหลังเรียน (Vercel + Postgres)",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  }
+}

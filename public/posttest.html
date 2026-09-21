@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แบบทดสอบหลังเรียน — ระบบอุปถัมภ์ ม.อ.ปัตตานี</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/questions.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="steps">
+    <span class="step">1. ก่อนเรียน</span>
+    <span class="step">2. วีดีโอ</span>
+    <span class="step active">3. หลังเรียน</span>
+  </div>
+  <h1>แบบทดสอบหลังเรียน</h1>
+  <div class="sub">เรื่อง ระบบอุปถัมภ์ในมหาวิทยาลัยสงขลานครินทร์ วิทยาเขตปัตตานี</div>
+  <div class="note">แบบทดสอบนี้ไม่เก็บข้อมูลส่วนตัวใด ๆ ของผู้ตอบ</div>
+
+  <div id="formArea">
+    <div id="qContainer"></div>
+
+    <div class="err" id="err">กรุณาตอบให้ครบทุกข้อ</div>
+    <button class="submit" id="submitBtn" onclick="submitForm()">ส่งคำตอบ</button>
+  </div>
+
+  <div id="resultArea" style="display:none;">
+    <div class="card" style="text-align:center;">
+      <p style="font-size:16px;">คะแนนก่อนเรียน: <b id="preScoreOut">-</b> / 11</p>
+      <p style="font-size:16px;">คะแนนหลังเรียน: <b id="postScoreOut">-</b> / 11</p>
+      <p style="font-size:15px; color:#2f6f4f;" id="diffOut"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const sessionToken = params.get('sid') || '';
+
+  const qContainer = document.getElementById('qContainer');
+  QUESTIONS.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'card q';
+    div.innerHTML = `
+      <div class="qtext">${i + 1}. ${q.text}</div>
+      <div class="opts">
+        <label><input type="radio" name="q${i}" value="true"> ถูก</label>
+        <label><input type="radio" name="q${i}" value="false"> ผิด</label>
+      </div>`;
+    qContainer.appendChild(div);
+  });
+
+  async function submitForm() {
+    let answers = [];
+    let allAnswered = true;
+    QUESTIONS.forEach((q, i) => {
+      const sel = document.querySelector(`input[name="q${i}"]:checked`);
+      if (!sel) allAnswered = false;
+      answers.push(sel ? sel.value === 'true' : null);
+    });
+
+    if (!allAnswered) {
+      document.getElementById('err').style.display = 'block';
+      return;
+    }
+    document.getElementById('err').style.display = 'none';
+
+    let score = 0;
+    answers.forEach((a, i) => { if (a === QUESTIONS[i].answer) score++; });
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึก...';
+
+    try {
+      const res = await fetch('/api/submit-posttest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sid: sessionToken, answers, score })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || 'บันทึกไม่สำเร็จ');
+
+      document.getElementById('formArea').style.display = 'none';
+      document.getElementById('resultArea').style.display = 'block';
+      document.getElementById('preScoreOut').textContent = json.preScore === null ? 'ไม่พบข้อมูล' : json.preScore;
+      document.getElementById('postScoreOut').textContent = json.postScore;
+      if (json.preScore !== null) {
+        const diff = json.postScore - json.preScore;
+        document.getElementById('diffOut').textContent =
+          diff > 0 ? `คะแนนเพิ่มขึ้น ${diff} คะแนน จากก่อนเรียน` :
+          diff < 0 ? `คะแนนลดลง ${Math.abs(diff)} คะแนน จากก่อนเรียน` :
+          'คะแนนเท่ากับก่อนเรียน';
+      }
+    } catch (e) {
+      alert('เกิดข้อผิดพลาด: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = 'ส่งคำตอบ';
+    }
+  }
+</script>
+</body>
+</html>

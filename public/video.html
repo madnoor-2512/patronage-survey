@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รับชมวีดีโอ — ระบบอุปถัมภ์ ม.อ.ปัตตานี</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="steps">
+    <span class="step">1. ก่อนเรียน</span>
+    <span class="step active">2. วีดีโอ</span>
+    <span class="step">3. หลังเรียน</span>
+  </div>
+  <h1>รับชมวีดีโอ</h1>
+  <div class="sub">เรื่อง ระบบอุปถัมภ์ในสังคมไทย (โปรดดูให้จบก่อนทำแบบทดสอบหลังเรียน)</div>
+
+  <div class="videoWrap">
+    <iframe src="https://www.youtube.com/embed/MmKvgwRw7KE" title="ระบบอุปถัมภ์" allowfullscreen></iframe>
+  </div>
+
+  <a class="next" id="nextLink" href="#">ไปทำแบบทดสอบหลังเรียน &rarr;</a>
+  <div class="hint">ระบบจะจับคู่คะแนนก่อน-หลังของคุณอัตโนมัติ (ไม่เก็บข้อมูลส่วนตัว)</div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const sid = params.get('sid') || '';
+  document.getElementById('nextLink').href = '/posttest?sid=' + encodeURIComponent(sid);
+</script>
+</body>
+</html>
