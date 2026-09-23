@@ -16,27 +16,17 @@
   <h1>รับชมวีดีโอ</h1>
   <div class="sub">โปรดดูให้จบก่อนทำแบบทดสอบหลังเรียน</div>
 
-  <div class="videoWrap videoPlaceholder" id="videoPlaceholder">
-    <button class="videoPlay" id="playVideo" type="button">เล่นวีดีโอ</button>
+  <div class="videoWrap">
+    <iframe src="https://www.youtube.com/embed/MmKvgwRw7KE" title="ระบบอุปถัมภ์" allowfullscreen></iframe>
   </div>
 
   <a class="next" id="nextLink" href="#">ไปทำแบบทดสอบหลังเรียน &rarr;</a>
-  <div class="hint">ระบบจะจับคู่คะแนนก่อน-หลังของคุณอัตโนมัติ (ไม่เก็บข้อมูลส่วนตัว)</div>
 </div>
 
 <script>
   const params = new URLSearchParams(window.location.search);
   const sid = params.get('sid') || '';
   document.getElementById('nextLink').href = '/posttest?sid=' + encodeURIComponent(sid);
-  document.getElementById('playVideo').addEventListener('click', () => {
-    const placeholder = document.getElementById('videoPlaceholder');
-    const iframe = document.createElement('iframe');
-    iframe.src = 'https://www.youtube.com/embed/MmKvgwRw7KE?autoplay=1';
-    iframe.title = 'ระบบอุปถัมภ์';
-    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
-    iframe.allowFullscreen = true;
-    placeholder.replaceChildren(iframe);
-  });
 </script>
 </body>
 </html>
