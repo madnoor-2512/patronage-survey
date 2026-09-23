@@ -1,5 +1,5 @@
-import { sql } from '@vercel/postgres';
-import { ensureTable } from '../lib/db.js';
+import { appendResponse, findSession } from '../lib/sheets.js';
+import { calculateScore } from '../lib/scoring.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,25 +7,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sid, answers, score } = req.body || {};
-    if (!sid || !Array.isArray(answers) || typeof score !== 'number') {
+    const { sid, answers } = req.body || {};
+    if (!sid || !Array.isArray(answers)) {
       return res.status(400).json({ ok: false, error: 'ข้อมูลไม่ถูกต้อง' });
     }
 
-    await ensureTable();
+    const score = calculateScore(answers);
+    const session = await findSession(sid);
+    if (!session || session.row[4] === undefined || session.row[4] === '') {
+      return res.status(400).json({ ok: false, error: 'ไม่พบผลแบบทดสอบก่อนเรียนของรอบนี้' });
+    }
+    if (session?.row?.[6] !== undefined && session.row[6] !== '') {
+      return res.status(409).json({ ok: false, error: 'แบบทดสอบหลังเรียนถูกส่งไปแล้ว ไม่สามารถทำซ้ำได้' });
+    }
 
-    await sql`
-      INSERT INTO responses (session_token, phase, answers, score)
-      VALUES (${sid}, 'posttest', ${JSON.stringify(answers)}, ${score})
-    `;
-
-    const pre = await sql`
-      SELECT score FROM responses
-      WHERE session_token = ${sid} AND phase = 'pretest'
-      ORDER BY created_at DESC
-      LIMIT 1
-    `;
-    const preScore = pre.rows.length ? pre.rows[0].score : null;
+    await appendResponse({ sid, phase: 'posttest', answers, score, existingSession: session });
+    const preScore = Number(session.row[4]);
 
     return res.status(200).json({ ok: true, postScore: score, preScore });
   } catch (e) {

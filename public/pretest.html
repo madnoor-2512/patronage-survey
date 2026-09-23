@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>แบบทดสอบก่อนเรียน — ระบบอุปถัมภ์ ม.อ.ปัตตานี</title>
+<title>แบบทดสอบก่อนเรียน</title>
 <link rel="stylesheet" href="/style.css">
 <script src="/questions.js"></script>
 </head>
@@ -15,8 +15,7 @@
     <span class="step">3. หลังเรียน</span>
   </div>
   <h1>แบบทดสอบก่อนเรียน</h1>
-  <div class="sub">เรื่อง ระบบอุปถัมภ์ในมหาวิทยาลัยสงขลานครินทร์ วิทยาเขตปัตตานี</div>
-  <div class="note">แบบทดสอบนี้ไม่เก็บข้อมูลส่วนตัวใด ๆ ของผู้ตอบ</div>
+  <div class="sub">เรื่อง ระบบอุปถัมภ์ในรั่วมหาลัย</div>
 
   <div id="qContainer"></div>
 
@@ -26,9 +25,10 @@
 
 <script>
   const sessionToken = genSessionToken();
+  const displayedQuestions = shuffleQuestions();
 
   const qContainer = document.getElementById('qContainer');
-  QUESTIONS.forEach((q, i) => {
+  displayedQuestions.forEach((q, i) => {
     const div = document.createElement('div');
     div.className = 'card q';
     div.innerHTML = `
@@ -43,10 +43,10 @@
   async function submitForm() {
     let answers = [];
     let allAnswered = true;
-    QUESTIONS.forEach((q, i) => {
+    displayedQuestions.forEach((q, i) => {
       const sel = document.querySelector(`input[name="q${i}"]:checked`);
       if (!sel) allAnswered = false;
-      answers.push(sel ? sel.value === 'true' : null);
+      answers.push({ questionId: q.id, value: sel ? sel.value === 'true' : null });
     });
 
     if (!allAnswered) {
@@ -54,9 +54,6 @@
       return;
     }
     document.getElementById('err').style.display = 'none';
-
-    let score = 0;
-    answers.forEach((a, i) => { if (a === QUESTIONS[i].answer) score++; });
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -66,7 +63,7 @@
       const res = await fetch('/api/submit-pretest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid: sessionToken, answers, score })
+        body: JSON.stringify({ sid: sessionToken, answers })
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || 'บันทึกไม่สำเร็จ');

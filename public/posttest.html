@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>แบบทดสอบหลังเรียน — ระบบอุปถัมภ์ ม.อ.ปัตตานี</title>
+<title>แบบทดสอบหลังเรียน</title>
 <link rel="stylesheet" href="/style.css">
 <script src="/questions.js"></script>
 </head>
@@ -15,7 +15,7 @@
     <span class="step active">3. หลังเรียน</span>
   </div>
   <h1>แบบทดสอบหลังเรียน</h1>
-  <div class="sub">เรื่อง ระบบอุปถัมภ์ในมหาวิทยาลัยสงขลานครินทร์ วิทยาเขตปัตตานี</div>
+  <div class="sub">เรื่อง ระบบอุปถัมภ์ในรั่วมหาลัย</div>
   <div class="note">แบบทดสอบนี้ไม่เก็บข้อมูลส่วนตัวใด ๆ ของผู้ตอบ</div>
 
   <div id="formArea">
@@ -27,8 +27,8 @@
 
   <div id="resultArea" style="display:none;">
     <div class="card" style="text-align:center;">
-      <p style="font-size:16px;">คะแนนก่อนเรียน: <b id="preScoreOut">-</b> / 11</p>
-      <p style="font-size:16px;">คะแนนหลังเรียน: <b id="postScoreOut">-</b> / 11</p>
+      <p style="font-size:16px;">คะแนนก่อนเรียน: <b id="preScoreOut">-</b> / 15</p>
+      <p style="font-size:16px;">คะแนนหลังเรียน: <b id="postScoreOut">-</b> / 15</p>
       <p style="font-size:15px; color:#2f6f4f;" id="diffOut"></p>
     </div>
   </div>
@@ -38,8 +38,15 @@
   const params = new URLSearchParams(window.location.search);
   const sessionToken = params.get('sid') || '';
 
+  const navigationEntry = performance.getEntriesByType('navigation')[0];
+  const isPageReload = navigationEntry?.type === 'reload' || performance.navigation?.type === 1;
+  if (isPageReload) {
+    window.location.replace('/pretest');
+  }
+
   const qContainer = document.getElementById('qContainer');
-  QUESTIONS.forEach((q, i) => {
+  const displayedQuestions = shuffleQuestions();
+  displayedQuestions.forEach((q, i) => {
     const div = document.createElement('div');
     div.className = 'card q';
     div.innerHTML = `
@@ -54,10 +61,10 @@
   async function submitForm() {
     let answers = [];
     let allAnswered = true;
-    QUESTIONS.forEach((q, i) => {
+    displayedQuestions.forEach((q, i) => {
       const sel = document.querySelector(`input[name="q${i}"]:checked`);
       if (!sel) allAnswered = false;
-      answers.push(sel ? sel.value === 'true' : null);
+      answers.push({ questionId: q.id, value: sel ? sel.value === 'true' : null });
     });
 
     if (!allAnswered) {
@@ -65,9 +72,6 @@
       return;
     }
     document.getElementById('err').style.display = 'none';
-
-    let score = 0;
-    answers.forEach((a, i) => { if (a === QUESTIONS[i].answer) score++; });
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -77,9 +81,15 @@
       const res = await fetch('/api/submit-posttest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid: sessionToken, answers, score })
+        body: JSON.stringify({ sid: sessionToken, answers })
       });
       const json = await res.json();
+      if (res.status === 409) {
+        document.getElementById('formArea').style.display = 'none';
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('resultArea').innerHTML = '<div class="card" style="text-align:center;"><p>แบบทดสอบหลังเรียนถูกส่งไปแล้ว</p><p class="hint">ไม่สามารถทำแบบทดสอบซ้ำในรอบนี้ได้</p></div>';
+        return;
+      }
       if (!res.ok || !json.ok) throw new Error(json.error || 'บันทึกไม่สำเร็จ');
 
       document.getElementById('formArea').style.display = 'none';

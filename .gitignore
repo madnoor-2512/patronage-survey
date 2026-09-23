@@ -1,0 +1,13 @@
+node_modules/
+.vercel/
+.env*
+# Local credentials and key material
+*.pem
+*.key
+*service-account*.json
+*credentials*.json
+patronage-elearning-6bf4afe0c828.json
+
+# Local OS and tool files
+.DS_Store
+*.log
